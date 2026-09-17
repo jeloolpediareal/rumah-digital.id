@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e17">
+  <meta name="theme-color" content="#070b14">
   <title>Withdraw - Rumah Digital</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="logo.png">
@@ -18,7 +18,7 @@
   </header>
 
   <main class="page-content">
-    <h1 class="page-title"> Withdraw</h1>
+    <h1 class="page-title">Withdraw</h1>
 
     <div class="card balance-card">
       <div class="card-title">Saldo Tersedia</div>
@@ -26,17 +26,14 @@
       <div class="balance-idr" id="w-balance-idr">Rp 0</div>
     </div>
 
-    <!-- Locked state -->
     <div id="locked-state" class="card hidden">
       <div class="empty-state">
-        <div class="icon"></div>
-        <h3 style="color:var(--text);margin-bottom:8px;">Fitur Terkunci</h3>
-        <p>Capai saldo <strong>$10</strong> di Dashboard lalu bayar unlock $5 via QRIS untuk membuka penarikan.</p>
-        <a href="dashboard.html" class="btn btn-primary mt-3" style="max-width:220px;margin:16px auto 0;">Ke Dashboard</a>
+        <p style="font-size:1rem;font-weight:600;color:var(--text);margin-bottom:8px">Fitur Terkunci</p>
+        <p>Capai saldo $10 di Dashboard lalu bayar unlock $5 via QRIS untuk membuka penarikan.</p>
+        <a href="dashboard.html" class="btn btn-primary mt-3" style="max-width:220px;margin:16px auto 0">Ke Dashboard</a>
       </div>
     </div>
 
-    <!-- Withdraw form -->
     <div id="withdraw-form" class="card hidden">
       <div class="card-title">Form Penarikan</div>
       <div class="form-group">
@@ -68,30 +65,21 @@
     </div>
   </main>
 
-  <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <a href="home.html" class="nav-item" data-page="home">
-      <div class="icon-wrap">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
       Home
     </a>
     <a href="dashboard.html" class="nav-item" data-page="dashboard">
-      <div class="icon-wrap">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
       Dashboard
     </a>
     <a href="withdraw.html" class="nav-item" data-page="withdraw">
-      <div class="icon-wrap">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
       Withdraw
     </a>
     <a href="riwayat.html" class="nav-item" data-page="riwayat">
-      <div class="icon-wrap">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
       Riwayat
     </a>
   </nav>
@@ -99,8 +87,8 @@
   <script src="data.js"></script>
   <script src="app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const user = App.requireAuth();
+    document.addEventListener('DOMContentLoaded', function() {
+      var user = App.requireAuth();
       if (!user) return;
 
       App.setActiveNav('withdraw');
@@ -117,45 +105,36 @@
         document.getElementById('withdraw-form').classList.add('hidden');
       }
 
-      document.getElementById('btn-submit-wd').addEventListener('click', () => {
-        const amount = parseFloat(document.getElementById('wd-amount').value);
-        const method = document.getElementById('wd-method').value;
-        const account = document.getElementById('wd-account').value.trim();
-        const name = document.getElementById('wd-name').value.trim();
+      document.getElementById('btn-submit-wd').addEventListener('click', function() {
+        var amount = parseFloat(document.getElementById('wd-amount').value);
+        var method = document.getElementById('wd-method').value;
+        var account = document.getElementById('wd-account').value.trim();
+        var name = document.getElementById('wd-name').value.trim();
 
-        if (!amount || amount < 1) {
-          App.showToast('Minimal penarikan $1', 'error');
-          return;
-        }
-        if (amount > user.balanceUSD) {
-          App.showToast('Saldo tidak cukup', 'error');
-          return;
-        }
-        if (!account || !name) {
-          App.showToast('Lengkapi semua data', 'error');
-          return;
-        }
+        if (!amount || amount < 1) { App.showToast('Minimal penarikan $1', 'error'); return; }
+        if (amount > user.balanceUSD) { App.showToast('Saldo tidak cukup', 'error'); return; }
+        if (!account || !name) { App.showToast('Lengkapi semua data', 'error'); return; }
 
-        const history = user.withdrawHistory || [];
+        var history = user.withdrawHistory || [];
         history.unshift({
           id: 'WD' + Date.now(),
-          amount,
-          method,
-          account,
-          name,
+          amount: amount,
+          method: method,
+          account: account,
+          name: name,
           status: 'pending',
           createdAt: new Date().toISOString()
         });
 
-        const newUSD = +(user.balanceUSD - amount).toFixed(4);
-        RD.getUsdIdrRate().then(rate => {
+        var newUSD = +(user.balanceUSD - amount).toFixed(4);
+        RD.getUsdIdrRate().then(function(rate) {
           RD.updateUser(user.username, {
             balanceUSD: newUSD,
             balanceIDR: +(newUSD * rate).toFixed(0),
             withdrawHistory: history
           });
-          App.showToast('Penarikan diajukan! Cek Riwayat.', 'success');
-          setTimeout(() => window.location.href = 'riwayat.html', 800);
+          App.showToast('Penarikan diajukan', 'success');
+          setTimeout(function() { window.location.href = 'riwayat.html'; }, 700);
         });
       });
     });

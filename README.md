@@ -1,19 +1,18 @@
-# Rumah Digital — Futuristic Mining UI
+# Rumah Digital
 
-Versi ini menambahkan:
-- `admin.html` dengan login admin, statistik pengguna, kontrol Close/Online Server, tambah/edit/hapus server, tarif USD per tick dan interval.
-- Saat daftar, pengguna wajib memilih server mining yang sedang tersedia.
-- Dashboard menampilkan server yang dipilih dan otomatis mengikuti status server.
-- Tampilan dipoles dengan emoji, glass/neon cards, dan nuansa aplikasi futuristik.
+Crypto mining web app + Admin panel.
 
-## Demo admin
-- URL: `/admin.html`
-- Username: `admin`
-- Password: `Admin@2026`
+## Akses
+- Website: index.html
+- Admin: /admin.html
+  - Username: Jelool
+  - Password: Kanaya Imut
 
-## Penting untuk deployment Vercel
-Versi ini masih **frontend/localStorage demo**. Artinya data pengguna dan konfigurasi server hanya tersimpan di browser tempat data dibuat. `Close Server` di satu perangkat tidak otomatis mematikan mining pada perangkat pengguna lain.
+## Fitur Admin
+- Close Server / Online Server
+- Tambah Server (atur rate USD per tick)
+- Status Pengguna (online/mining)
+- Total Pengguna
 
-Untuk website produksi multi-pengguna, login admin, saldo, status online, server mining, dan pembayaran harus dipindahkan ke backend/database (mis. Vercel Functions + database) dan password/token rahasia tidak boleh ditaruh di HTML/JavaScript frontend.
-
-Jangan menaruh secret API QRIS di frontend. Gunakan endpoint backend untuk membuat dan memverifikasi transaksi.
+## Deploy Vercel
+Drag & drop folder ini ke vercel.com/new

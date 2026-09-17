@@ -1,65 +1,217 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#070b14"><title>Admin Panel • Rumah Digital</title>
-<link rel="stylesheet" href="style.css"><link rel="icon" href="logo.png">
-<style>
-.admin-page{max-width:1100px;margin:auto;padding:28px 16px 60px}
-.admin-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
-.admin-brand{display:flex;align-items:center;gap:12px}.admin-brand img{width:46px;height:46px;filter:drop-shadow(0 0 12px rgba(0,229,255,.35))}
-.admin-brand h1{font-size:1.25rem}.admin-brand small{display:block;color:var(--text-muted);margin-top:3px}
-.admin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.stat-card{padding:18px;border:1px solid var(--border);background:linear-gradient(145deg,rgba(17,24,39,.98),rgba(10,14,23,.95));border-radius:18px}
-.stat-card .emoji{font-size:1.5rem}.stat-card b{display:block;font-size:1.5rem;margin-top:8px}.stat-card span{font-size:.78rem;color:var(--text-muted)}
-.admin-columns{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.server-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
-.server-row:last-child{border-bottom:0}.server-meta strong{display:block}.server-meta span{font-size:.8rem;color:var(--text-muted)}
-.actions{display:flex;gap:8px;flex-wrap:wrap}.mini{padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer}.mini.danger{border-color:rgba(239,68,68,.5);color:#fecaca}.mini.good{border-color:rgba(34,197,94,.5);color:#bbf7d0}
-.table-wrap{overflow:auto}.user-table{width:100%;border-collapse:collapse;font-size:.84rem}.user-table th,.user-table td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--border);white-space:nowrap}.user-table th{color:var(--text-muted);font-weight:600}
-.login-overlay{position:fixed;inset:0;background:radial-gradient(circle at top,#0b2030,#05070c 65%);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.admin-login{width:min(390px,100%);padding:26px}.hidden{display:none!important}
-@media(max-width:800px){.admin-grid{grid-template-columns:repeat(2,1fr)}.admin-columns{grid-template-columns:1fr}.admin-top{align-items:flex-start}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <title>Admin Panel - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png">
 </head>
 <body>
-<div id="login-overlay" class="login-overlay">
-  <form class="auth-card admin-login" id="admin-login">
-    <div style="text-align:center;font-size:2.4rem">️</div><h2 style="text-align:center;margin:8px 0">Admin Console</h2>
-    <p style="text-align:center;color:var(--text-muted);font-size:.85rem;margin-bottom:20px">Kelola server mining dan monitor pengguna.</p>
-    <div id="admin-alert" class="alert"></div>
-    <div class="form-group"><label>Username Admin</label><input id="admin-user" required autocomplete="username"></div>
-    <div class="form-group"><label>Password</label><input id="admin-pass" type="password" required autocomplete="current-password"></div>
-    <button class="btn btn-primary"> Masuk Panel</button>
-  </form>
-</div>
-<main class="admin-page hidden" id="panel">
-  <div class="admin-top">
-    <div class="admin-brand"><img src="logo.png"><div><h1>RUMAH DIGITAL • ADMIN</h1><small> Mining Control Center</small></div></div>
-    <button class="mini" id="admin-logout">Keluar ↗</button>
-  </div>
-  <section class="admin-grid">
-    <div class="stat-card"><div class="emoji"></div><b id="total-users">0</b><span>Total Pengguna</span></div>
-    <div class="stat-card"><div class="emoji"></div><b id="online-users">0</b><span>Online / Mining</span></div>
-    <div class="stat-card"><div class="emoji">️</div><b id="mining-users">0</b><span>Sedang Menambang</span></div>
-    <div class="stat-card"><div class="emoji">️</div><b id="server-count">0</b><span>Server Aktif</span></div>
-  </section>
-  <div class="admin-columns">
-    <section class="card"><div class="card-title">️ Kontrol Server</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
-        <span id="global-status">Status Server</span><button class="mini" id="global-toggle"></button>
-      </div>
-      <div id="server-list"></div>
-      <form id="add-server" style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
-        <div class="card-title"> Tambah Server</div>
-        <div class="form-group"><label>Nama Server</label><input id="server-name" placeholder="Aurora Hash #03" required></div>
-        <div class="form-group"><label>Dollar per detik/tick</label><input id="server-rate" type="number" min="0" step="0.0001" placeholder="0.1200" required></div>
-        <div class="form-group"><label>Interval mining (detik)</label><input id="server-interval" type="number" min="1" value="5" required></div>
-        <button class="btn btn-primary"> Simpan Server</button>
+  <!-- Login -->
+  <div id="admin-login" class="auth-page">
+    <img src="logo.png" alt="RD" class="auth-logo" style="width:80px;height:80px">
+    <h1 class="auth-title" style="font-size:1.35rem">ADMIN PANEL</h1>
+    <p class="auth-sub">Rumah Digital Control</p>
+    <div class="auth-card">
+      <div id="admin-alert" class="alert"></div>
+      <form id="form-admin-login">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="admin-user" placeholder="Username admin" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="admin-pass" placeholder="Password admin" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Masuk Admin</button>
       </form>
-    </section>
-    <section class="card"><div class="card-title"> Status Pengguna</div>
-      <div class="table-wrap"><table class="user-table"><thead><tr><th>User</th><th>Server</th><th>Status</th><th>Saldo</th></tr></thead><tbody id="users-body"></tbody></table></div>
-    </section>
+    </div>
   </div>
-</main>
-<script src="data.js"></script><script src="admin.js"></script>
-</body></html>
+
+  <!-- Dashboard -->
+  <div id="admin-panel" class="admin-body hidden">
+    <div class="admin-header">
+      <h1>Admin Panel</h1>
+      <button class="btn btn-outline btn-sm" id="btn-admin-logout">Keluar</button>
+    </div>
+
+    <div class="admin-grid">
+      <div class="stat-card">
+        <div class="val" id="stat-total">0</div>
+        <div class="lbl">Total Pengguna</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="stat-online">0</div>
+        <div class="lbl">Sedang Mining</div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Kontrol Server</h2>
+      <div class="admin-actions">
+        <button class="btn btn-danger" id="btn-close-server">Close Server</button>
+        <button class="btn btn-success" id="btn-online-server">Online Server</button>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin-top:8px" id="current-status">Status: Online</p>
+    </div>
+
+    <div class="admin-section">
+      <h2>Kelola Server Mining</h2>
+      <div id="server-list"></div>
+      <div class="card mt-3">
+        <div class="card-title">Tambah Server Baru</div>
+        <div class="form-group">
+          <label>Nama Server</label>
+          <input type="text" id="new-srv-name" placeholder="Contoh: Beta Pool">
+        </div>
+        <div class="form-group">
+          <label>Rate USD per tick (5 detik)</label>
+          <input type="number" id="new-srv-rate" placeholder="0.07" step="0.001" min="0.001">
+        </div>
+        <button class="btn btn-primary" id="btn-add-server">Tambah Server</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Status Pengguna</h2>
+      <div class="card" id="user-list">
+        <div class="empty-state"><p>Belum ada pengguna</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var loginView = document.getElementById('admin-login');
+      var panelView = document.getElementById('admin-panel');
+      var alertBox = document.getElementById('admin-alert');
+
+      if (RD.isAdminLoggedIn()) {
+        showPanel();
+      }
+
+      document.getElementById('form-admin-login').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var user = document.getElementById('admin-user').value.trim();
+        var pass = document.getElementById('admin-pass').value;
+        if (RD.adminLogin(user, pass)) {
+          showPanel();
+        } else {
+          alertBox.textContent = 'Username atau password salah';
+          alertBox.className = 'alert alert-error show';
+        }
+      });
+
+      document.getElementById('btn-admin-logout').addEventListener('click', function() {
+        RD.adminLogout();
+        loginView.classList.remove('hidden');
+        panelView.classList.add('hidden');
+      });
+
+      document.getElementById('btn-close-server').addEventListener('click', function() {
+        RD.setServerStatus('maintenance');
+        updateStatusLabel();
+        alert('Server ditutup. Semua mining berhenti.');
+      });
+
+      document.getElementById('btn-online-server').addEventListener('click', function() {
+        RD.setServerStatus('online');
+        updateStatusLabel();
+        alert('Server dihidupkan kembali.');
+      });
+
+      document.getElementById('btn-add-server').addEventListener('click', function() {
+        var name = document.getElementById('new-srv-name').value.trim();
+        var rate = parseFloat(document.getElementById('new-srv-rate').value);
+        if (!name || !rate || rate <= 0) {
+          alert('Isi nama dan rate dengan benar');
+          return;
+        }
+        var servers = RD.getServers();
+        var id = 'srv-' + Date.now();
+        servers.push({ id: id, name: name, rate: rate, active: true });
+        RD.saveServers(servers);
+        document.getElementById('new-srv-name').value = '';
+        document.getElementById('new-srv-rate').value = '';
+        renderServers();
+      });
+
+      function showPanel() {
+        loginView.classList.add('hidden');
+        panelView.classList.remove('hidden');
+        refreshAll();
+      }
+
+      function updateStatusLabel() {
+        var s = RD.getServerStatus();
+        document.getElementById('current-status').textContent = 'Status: ' + (s === 'online' ? 'Online' : 'Maintenance');
+      }
+
+      function renderServers() {
+        var servers = RD.getServers();
+        var el = document.getElementById('server-list');
+        el.innerHTML = servers.map(function(s) {
+          return '<div class="server-list-item"><div class="info"><h4>' + s.name + '</h4><span>$' + s.rate.toFixed(4) + ' / tick · ' + (s.active ? 'Aktif' : 'Nonaktif') + '</span></div><button class="btn btn-outline btn-sm" onclick="toggleServer(\'' + s.id + '\')">' + (s.active ? 'Nonaktifkan' : 'Aktifkan') + '</button></div>';
+        }).join('');
+      }
+
+      window.toggleServer = function(id) {
+        var servers = RD.getServers();
+        var s = servers.find(function(x) { return x.id === id; });
+        if (s) {
+          s.active = !s.active;
+          RD.saveServers(servers);
+          renderServers();
+        }
+      };
+
+      function renderUsers() {
+        var users = RD.getUsers();
+        document.getElementById('stat-total').textContent = users.length;
+
+        var now = Date.now();
+        var onlineCount = 0;
+        var el = document.getElementById('user-list');
+
+        if (users.length === 0) {
+          el.innerHTML = '<div class="empty-state"><p>Belum ada pengguna</p></div>';
+          document.getElementById('stat-online').textContent = '0';
+          return;
+        }
+
+        el.innerHTML = users.map(function(u) {
+          var last = u.lastActive ? new Date(u.lastActive).getTime() : 0;
+          var isOnline = (now - last) < 30000 || u.isMining;
+          if (isOnline) onlineCount++;
+          var servers = RD.getServers();
+          var srv = servers.find(function(s) { return s.id === u.serverId; });
+          var srvName = srv ? srv.name : '-';
+          var badge = isOnline
+            ? '<span class="badge-online">Mining</span>'
+            : '<span class="badge-offline">Offline</span>';
+          return '<div class="user-row"><div><div class="name">' + u.username + '</div><div class="meta">' + srvName + ' · $' + Number(u.balanceUSD).toFixed(4) + '</div></div>' + badge + '</div>';
+        }).join('');
+
+        document.getElementById('stat-online').textContent = onlineCount;
+      }
+
+      function refreshAll() {
+        updateStatusLabel();
+        renderServers();
+        renderUsers();
+      }
+
+      // Auto refresh users every 5s
+      setInterval(function() {
+        if (!panelView.classList.contains('hidden')) {
+          renderUsers();
+          updateStatusLabel();
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
