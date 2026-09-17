@@ -96,7 +96,7 @@
       document.getElementById('form-admin-login').addEventListener('submit', function(e) {
         e.preventDefault();
         var user = document.getElementById('admin-user').value.trim();
-        var pass = document.getElementById('admin-pass').value;
+        var pass = document.getElementById('admin-pass').value.trim();
         if (RD.adminLogin(user, pass)) {
           showPanel();
         } else {
