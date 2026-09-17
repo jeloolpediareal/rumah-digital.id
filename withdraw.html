@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <title>Withdraw - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo-wrap">
+      <img src="logo.png" alt="RD">
+      <div class="brand">RUMAH <span>DIGITAL</span></div>
+    </div>
+    <div class="user-badge" id="header-user"></div>
+  </header>
+
+  <main class="page-content">
+    <h1 class="page-title">Withdraw</h1>
+
+    <div class="card balance-card">
+      <div class="card-title">Saldo Tersedia</div>
+      <div class="balance-usd" id="w-balance-usd">$0.0000</div>
+      <div class="balance-idr" id="w-balance-idr">Rp 0</div>
+    </div>
+
+    <div id="locked-state" class="card hidden">
+      <div class="empty-state">
+        <p style="font-size:1rem;font-weight:600;color:var(--text);margin-bottom:8px">Fitur Terkunci</p>
+        <p>Capai saldo $10 di Dashboard lalu bayar unlock $5 via QRIS untuk membuka penarikan.</p>
+        <a href="dashboard.html" class="btn btn-primary mt-3" style="max-width:220px;margin:16px auto 0">Ke Dashboard</a>
+      </div>
+    </div>
+
+    <div id="withdraw-form" class="card hidden">
+      <div class="card-title">Form Penarikan</div>
+      <div class="form-group">
+        <label>Jumlah (USD)</label>
+        <input type="number" id="wd-amount" placeholder="Min $1" min="1" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Metode</label>
+        <select id="wd-method">
+          <option value="DANA">DANA</option>
+          <option value="OVO">OVO</option>
+          <option value="GoPay">GoPay</option>
+          <option value="ShopeePay">ShopeePay</option>
+          <option value="Bank BRI">Bank BRI</option>
+          <option value="Bank BCA">Bank BCA</option>
+          <option value="Bank BNI">Bank BNI</option>
+          <option value="Bank Mandiri">Bank Mandiri</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nomor / Rekening</label>
+        <input type="text" id="wd-account" placeholder="08xxx / No. Rekening">
+      </div>
+      <div class="form-group">
+        <label>Nama Penerima</label>
+        <input type="text" id="wd-name" placeholder="Nama sesuai akun">
+      </div>
+      <button class="btn btn-primary" id="btn-submit-wd">Ajukan Penarikan</button>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="home.html" class="nav-item" data-page="home">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      Home
+    </a>
+    <a href="dashboard.html" class="nav-item" data-page="dashboard">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+      Dashboard
+    </a>
+    <a href="withdraw.html" class="nav-item" data-page="withdraw">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      Withdraw
+    </a>
+    <a href="riwayat.html" class="nav-item" data-page="riwayat">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      Riwayat
+    </a>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var user = App.requireAuth();
+      if (!user) return;
+
+      App.setActiveNav('withdraw');
+      App.updateHeaderUser(user);
+
+      document.getElementById('w-balance-usd').textContent = App.formatUSD(user.balanceUSD);
+      document.getElementById('w-balance-idr').textContent = App.formatIDR(user.balanceIDR || 0);
+
+      if (user.unlockedWithdraw) {
+        document.getElementById('withdraw-form').classList.remove('hidden');
+        document.getElementById('locked-state').classList.add('hidden');
+      } else {
+        document.getElementById('locked-state').classList.remove('hidden');
+        document.getElementById('withdraw-form').classList.add('hidden');
+      }
+
+      document.getElementById('btn-submit-wd').addEventListener('click', function() {
+        var amount = parseFloat(document.getElementById('wd-amount').value);
+        var method = document.getElementById('wd-method').value;
+        var account = document.getElementById('wd-account').value.trim();
+        var name = document.getElementById('wd-name').value.trim();
+
+        if (!amount || amount < 1) { App.showToast('Minimal penarikan $1', 'error'); return; }
+        if (amount > user.balanceUSD) { App.showToast('Saldo tidak cukup', 'error'); return; }
+        if (!account || !name) { App.showToast('Lengkapi semua data', 'error'); return; }
+
+        var history = user.withdrawHistory || [];
+        history.unshift({
+          id: 'WD' + Date.now(),
+          amount: amount,
+          method: method,
+          account: account,
+          name: name,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
+
+        var newUSD = +(user.balanceUSD - amount).toFixed(4);
+        RD.getUsdIdrRate().then(function(rate) {
+          RD.updateUser(user.username, {
+            balanceUSD: newUSD,
+            balanceIDR: +(newUSD * rate).toFixed(0),
+            withdrawHistory: history
+          });
+          App.showToast('Penarikan diajukan', 'success');
+          setTimeout(function() { window.location.href = 'riwayat.html'; }, 700);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

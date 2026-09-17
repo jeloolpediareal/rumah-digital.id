@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <title>Admin Panel - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png">
+</head>
+<body>
+  <!-- Login -->
+  <div id="admin-login" class="auth-page">
+    <img src="logo.png" alt="RD" class="auth-logo" style="width:80px;height:80px">
+    <h1 class="auth-title" style="font-size:1.35rem">ADMIN PANEL</h1>
+    <p class="auth-sub">Rumah Digital Control</p>
+    <div class="auth-card">
+      <div id="admin-alert" class="alert"></div>
+      <form id="form-admin-login">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="admin-user" placeholder="Username admin" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="admin-pass" placeholder="Password admin" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Masuk Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="admin-panel" class="admin-body hidden">
+    <div class="admin-header">
+      <h1>Admin Panel</h1>
+      <button class="btn btn-outline btn-sm" id="btn-admin-logout">Keluar</button>
+    </div>
+
+    <div class="admin-grid">
+      <div class="stat-card">
+        <div class="val" id="stat-total">0</div>
+        <div class="lbl">Total Pengguna</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="stat-online">0</div>
+        <div class="lbl">Sedang Mining</div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Kontrol Server</h2>
+      <div class="admin-actions">
+        <button class="btn btn-danger" id="btn-close-server">Close Server</button>
+        <button class="btn btn-success" id="btn-online-server">Online Server</button>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin-top:8px" id="current-status">Status: Online</p>
+    </div>
+
+    <div class="admin-section">
+      <h2>Kelola Server Mining</h2>
+      <div id="server-list"></div>
+      <div class="card mt-3">
+        <div class="card-title">Tambah Server Baru</div>
+        <div class="form-group">
+          <label>Nama Server</label>
+          <input type="text" id="new-srv-name" placeholder="Contoh: Beta Pool">
+        </div>
+        <div class="form-group">
+          <label>Rate USD per tick (5 detik)</label>
+          <input type="number" id="new-srv-rate" placeholder="0.07" step="0.001" min="0.001">
+        </div>
+        <button class="btn btn-primary" id="btn-add-server">Tambah Server</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Status Pengguna</h2>
+      <div class="card" id="user-list">
+        <div class="empty-state"><p>Belum ada pengguna</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var loginView = document.getElementById('admin-login');
+      var panelView = document.getElementById('admin-panel');
+      var alertBox = document.getElementById('admin-alert');
+
+      if (RD.isAdminLoggedIn()) {
+        showPanel();
+      }
+
+      document.getElementById('form-admin-login').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var user = document.getElementById('admin-user').value.trim();
+        var pass = document.getElementById('admin-pass').value.trim();
+        var ok = false;
+        try {
+          if (window.RD && typeof RD.adminLogin === 'function') {
+            ok = RD.adminLogin(user, pass);
+          }
+        } catch (err) {}
+        // Fallback langsung di halaman (jika data.js gagal load)
+        if (!ok) {
+          var u = user.toLowerCase();
+          var p = pass;
+          if (u === 'kanaya' && p.toLowerCase() === 'imut') {
+            try { localStorage.setItem('rd_admin_session', '1'); } catch(e) {}
+            ok = true;
+          }
+        }
+        if (ok) {
+          showPanel();
+        } else {
+          alertBox.textContent = 'Username atau password salah';
+          alertBox.className = 'alert alert-error show';
+        }
+      });
+
+      document.getElementById('btn-admin-logout').addEventListener('click', function() {
+        RD.adminLogout();
+        loginView.classList.remove('hidden');
+        panelView.classList.add('hidden');
+      });
+
+      document.getElementById('btn-close-server').addEventListener('click', function() {
+        RD.setServerStatus('maintenance');
+        updateStatusLabel();
+        alert('Server ditutup. Semua mining berhenti.');
+      });
+
+      document.getElementById('btn-online-server').addEventListener('click', function() {
+        RD.setServerStatus('online');
+        updateStatusLabel();
+        alert('Server dihidupkan kembali.');
+      });
+
+      document.getElementById('btn-add-server').addEventListener('click', function() {
+        var name = document.getElementById('new-srv-name').value.trim();
+        var rate = parseFloat(document.getElementById('new-srv-rate').value);
+        if (!name || !rate || rate <= 0) {
+          alert('Isi nama dan rate dengan benar');
+          return;
+        }
+        var servers = RD.getServers();
+        var id = 'srv-' + Date.now();
+        servers.push({ id: id, name: name, rate: rate, active: true });
+        RD.saveServers(servers);
+        document.getElementById('new-srv-name').value = '';
+        document.getElementById('new-srv-rate').value = '';
+        renderServers();
+      });
+
+      function showPanel() {
+        loginView.classList.add('hidden');
+        panelView.classList.remove('hidden');
+        refreshAll();
+      }
+
+      function updateStatusLabel() {
+        var s = RD.getServerStatus();
+        document.getElementById('current-status').textContent = 'Status: ' + (s === 'online' ? 'Online' : 'Maintenance');
+      }
+
+      function renderServers() {
+        var servers = RD.getServers();
+        var el = document.getElementById('server-list');
+        el.innerHTML = servers.map(function(s) {
+          return '<div class="server-list-item"><div class="info"><h4>' + s.name + '</h4><span>$' + s.rate.toFixed(4) + ' / tick · ' + (s.active ? 'Aktif' : 'Nonaktif') + '</span></div><button class="btn btn-outline btn-sm" onclick="toggleServer(\'' + s.id + '\')">' + (s.active ? 'Nonaktifkan' : 'Aktifkan') + '</button></div>';
+        }).join('');
+      }
+
+      window.toggleServer = function(id) {
+        var servers = RD.getServers();
+        var s = servers.find(function(x) { return x.id === id; });
+        if (s) {
+          s.active = !s.active;
+          RD.saveServers(servers);
+          renderServers();
+        }
+      };
+
+      function renderUsers() {
+        var users = RD.getUsers();
+        document.getElementById('stat-total').textContent = users.length;
+
+        var now = Date.now();
+        var onlineCount = 0;
+        var el = document.getElementById('user-list');
+
+        if (users.length === 0) {
+          el.innerHTML = '<div class="empty-state"><p>Belum ada pengguna</p></div>';
+          document.getElementById('stat-online').textContent = '0';
+          return;
+        }
+
+        el.innerHTML = users.map(function(u) {
+          var last = u.lastActive ? new Date(u.lastActive).getTime() : 0;
+          var isOnline = (now - last) < 30000 || u.isMining;
+          if (isOnline) onlineCount++;
+          var servers = RD.getServers();
+          var srv = servers.find(function(s) { return s.id === u.serverId; });
+          var srvName = srv ? srv.name : '-';
+          var badge = isOnline
+            ? '<span class="badge-online">Mining</span>'
+            : '<span class="badge-offline">Offline</span>';
+          return '<div class="user-row"><div><div class="name">' + u.username + '</div><div class="meta">' + srvName + ' · $' + Number(u.balanceUSD).toFixed(4) + '</div></div>' + badge + '</div>';
+        }).join('');
+
+        document.getElementById('stat-online').textContent = onlineCount;
+      }
+
+      function refreshAll() {
+        updateStatusLabel();
+        renderServers();
+        renderUsers();
+      }
+
+      // Auto refresh users every 5s
+      setInterval(function() {
+        if (!panelView.classList.contains('hidden')) {
+          renderUsers();
+          updateStatusLabel();
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

