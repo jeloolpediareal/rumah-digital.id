@@ -5,8 +5,8 @@ Crypto mining web app + Admin panel.
 ## Akses
 - Website: index.html
 - Admin: /admin.html
-  - Username: Jelool
-  - Password: Kanaya Imut
+  - Username: kanaya
+  - Password: imut
 
 ## Fitur Admin
 - Close Server / Online Server
