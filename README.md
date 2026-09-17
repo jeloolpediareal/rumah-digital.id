@@ -1,39 +1,19 @@
-# Rumah Digital - Crypto Mining Web App
+# Rumah Digital — Futuristic Mining UI
 
-Website mining crypto modern dengan sistem login, dashboard real-time, dan unlock withdraw via QRIS.
+Versi ini menambahkan:
+- `admin.html` dengan login admin, statistik pengguna, kontrol Close/Online Server, tambah/edit/hapus server, tarif USD per tick dan interval.
+- Saat daftar, pengguna wajib memilih server mining yang sedang tersedia.
+- Dashboard menampilkan server yang dipilih dan otomatis mengikuti status server.
+- Tampilan dipoles dengan emoji, glass/neon cards, dan nuansa aplikasi futuristik.
 
-## Struktur (Flat - tanpa folder)
-```
-rumah-digital/
-├── index.html          # Login / Register
-├── home.html
-├── dashboard.html
-├── withdraw.html
-├── riwayat.html
-├── logo.png
-├── style.css
-├── data.js
-├── auth.js
-├── app.js
-└── README.md
-```
+## Demo admin
+- URL: `/admin.html`
+- Username: `admin`
+- Password: `Admin@2026`
 
-## Fitur
-- Login & Registrasi (data tersimpan di localStorage)
-- Dashboard dengan saldo USD + IDR
-- Mining otomatis setiap 5 detik
-- Progress bar target $10
-- Unlock fitur Withdraw dengan pembayaran QRIS $5 (real API BuatQris)
-- Form penarikan + riwayat
-- Bottom navigation ala aplikasi mobile
-- UI dark neon modern
+## Penting untuk deployment Vercel
+Versi ini masih **frontend/localStorage demo**. Artinya data pengguna dan konfigurasi server hanya tersimpan di browser tempat data dibuat. `Close Server` di satu perangkat tidak otomatis mematikan mining pada perangkat pengguna lain.
 
-## Cara Deploy ke Vercel
-1. Upload folder ini ke GitHub, atau
-2. Drag & drop folder ke https://vercel.com/new
-3. Deploy!
+Untuk website produksi multi-pengguna, login admin, saldo, status online, server mining, dan pembayaran harus dipindahkan ke backend/database (mis. Vercel Functions + database) dan password/token rahasia tidak boleh ditaruh di HTML/JavaScript frontend.
 
-## Catatan
-- Data user disimpan di localStorage browser.
-- Secret token QRIS ada di dashboard.html (static site).
-- Setelah bayar QRIS, klik "Saya Sudah Bayar" untuk unlock.
+Jangan menaruh secret API QRIS di frontend. Gunakan endpoint backend untuk membuat dan memverifikasi transaksi.

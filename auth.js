@@ -1,77 +1,14 @@
-// auth.js - Login & Register logic
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Redirect if already logged in
-  if (window.RD && RD.getCurrentUser()) {
-    window.location.href = 'dashboard.html';
-    return;
-  }
-
-  const tabLogin = document.getElementById('tab-login');
-  const tabRegister = document.getElementById('tab-register');
-  const formLogin = document.getElementById('form-login');
-  const formRegister = document.getElementById('form-register');
-  const alertBox = document.getElementById('alert');
-
-  function showAlert(msg, type = 'error') {
-    alertBox.textContent = msg;
-    alertBox.className = `alert alert-${type} show`;
-    setTimeout(() => alertBox.classList.remove('show'), 4000);
-  }
-
-  tabLogin.addEventListener('click', () => {
-    tabLogin.classList.add('active');
-    tabRegister.classList.remove('active');
-    formLogin.classList.remove('hidden');
-    formRegister.classList.add('hidden');
-    alertBox.classList.remove('show');
-  });
-
-  tabRegister.addEventListener('click', () => {
-    tabRegister.classList.add('active');
-    tabLogin.classList.remove('active');
-    formRegister.classList.remove('hidden');
-    formLogin.classList.add('hidden');
-    alertBox.classList.remove('show');
-  });
-
-  formLogin.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('login-user').value.trim();
-    const password = document.getElementById('login-pass').value;
-    if (!username || !password) {
-      showAlert('Isi username dan password');
-      return;
-    }
-    const res = RD.loginUser(username, password);
-    if (res.success) {
-      showAlert('Login berhasil! Mengalihkan...', 'success');
-      setTimeout(() => window.location.href = 'dashboard.html', 600);
-    } else {
-      showAlert(res.message);
-    }
-  });
-
-  formRegister.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('reg-user').value.trim();
-    const password = document.getElementById('reg-pass').value;
-    const confirm = document.getElementById('reg-confirm').value;
-    if (!username || !password) {
-      showAlert('Isi semua field');
-      return;
-    }
-    if (password !== confirm) {
-      showAlert('Password tidak cocok');
-      return;
-    }
-    const res = RD.createUser(username, password);
-    if (res.success) {
-      RD.setSession(username);
-      showAlert('Registrasi berhasil! Mengalihkan...', 'success');
-      setTimeout(() => window.location.href = 'dashboard.html', 600);
-    } else {
-      showAlert(res.message);
-    }
-  });
+// auth.js - login/register
+document.addEventListener('DOMContentLoaded',()=>{
+  if(RD.getCurrentUser()){location.href='dashboard.html';return;}
+  const tabLogin=document.getElementById('tab-login'),tabRegister=document.getElementById('tab-register');
+  const login=document.getElementById('form-login'),register=document.getElementById('form-register'),alertBox=document.getElementById('alert');
+  const serverSelect=document.getElementById('reg-server');
+  function alert(msg,type='error'){alertBox.textContent=msg;alertBox.className=`alert alert-${type} show`;setTimeout(()=>alertBox.classList.remove('show'),4000)}
+  function renderServers(){const c=RD.getConfig();serverSelect.innerHTML=c.servers.filter(s=>s.status!=='offline').map(s=>`<option value="${s.id}"> ${s.name} — $${Number(s.rate).toFixed(4)} / ${s.interval}s</option>`).join('');if(!serverSelect.innerHTML)serverSelect.innerHTML='<option value=""> Tidak ada server online</option>'}
+  renderServers();
+  tabLogin.onclick=()=>{tabLogin.classList.add('active');tabRegister.classList.remove('active');login.classList.remove('hidden');register.classList.add('hidden');alertBox.classList.remove('show')};
+  tabRegister.onclick=()=>{tabRegister.classList.add('active');tabLogin.classList.remove('active');register.classList.remove('hidden');login.classList.add('hidden');alertBox.classList.remove('show');renderServers()};
+  login.onsubmit=e=>{e.preventDefault();const res=RD.loginUser(document.getElementById('login-user').value.trim(),document.getElementById('login-pass').value);if(res.success){alert('Login berhasil! ','success');setTimeout(()=>location.href='dashboard.html',500)}else alert(res.message)};
+  register.onsubmit=e=>{e.preventDefault();const u=document.getElementById('reg-user').value.trim(),p=document.getElementById('reg-pass').value,c=document.getElementById('reg-confirm').value,s=serverSelect.value;if(p!==c)return alert('Password tidak cocok');const res=RD.createUser(u,p,s);if(res.success){RD.setSession(u);alert('Akun berhasil dibuat! ️','success');setTimeout(()=>location.href='dashboard.html',500)}else alert(res.message)};
 });
