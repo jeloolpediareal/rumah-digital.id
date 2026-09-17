@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Rumah Digital - Login</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png">
+</head>
+<body>
+  <div class="auth-page">
+    <img src="logo.png" alt="Rumah Digital" class="auth-logo">
+    <h1 class="auth-title">RUMAH DIGITAL</h1>
+    <p class="auth-sub">MINING CRYPTO | POWERING THE FUTURE</p>
+
+    <div class="auth-card">
+      <div class="tabs">
+        <button type="button" class="tab active" id="tab-login">Login</button>
+        <button type="button" class="tab" id="tab-register">Daftar</button>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <!-- Login Form -->
+      <form id="form-login">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="login-user" placeholder="Masukkan username" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-pass" placeholder="Masukkan password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Masuk</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="hidden">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="reg-user" placeholder="Buat username (min 3)" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-pass" placeholder="Buat password (min 4)" autocomplete="new-password" required>
+        </div>
+        <div class="form-group">
+          <label>Konfirmasi Password</label>
+          <input type="password" id="reg-confirm" placeholder="Ulangi password" autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
