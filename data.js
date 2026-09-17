@@ -109,10 +109,10 @@ function setServerStatus(status) {
 }
 
 function adminLogin(user, pass) {
-  user = (user || '').trim();
-  pass = (pass || '').trim();
-  // Username: Jelool | Password: Kanaya Imut (spasi di tengah)
-  if (user.toLowerCase() === 'jelool' && (pass === 'Kanaya Imut' || pass === 'KanayaImut' || pass.toLowerCase() === 'kanaya imut')) {
+  user = String(user || '').trim().toLowerCase();
+  pass = String(pass || '').trim().toLowerCase();
+  // Username: kanaya | Password: imut
+  if (user === 'kanaya' && pass === 'imut') {
     localStorage.setItem(RD_ADMIN_SESSION, '1');
     return true;
   }
