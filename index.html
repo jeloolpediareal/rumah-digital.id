@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e17">
+  <title>Rumah Digital - Login</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png" type="image/png">
+</head>
+<body>
+  <div class="auth-page">
+    <img src="logo.png" alt="Rumah Digital" class="auth-logo">
+    <h1 class="auth-title">RUMAH DIGITAL</h1>
+    <p class="auth-subtitle">Mining Crypto | Powering the Future</p>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" id="tabLogin">Login</button>
+        <button class="auth-tab" data-tab="register" id="tabRegister">Daftar</button>
+      </div>
+
+      <div id="alertBox" class="alert"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" placeholder="Masukkan username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Masukkan password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnLogin">Masuk</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" class="hidden">
+        <div class="form-group">
+          <label for="regUsername">Username</label>
+          <input type="text" id="regUsername" placeholder="Minimal 3 karakter" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" placeholder="Minimal 4 karakter" required autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="regServer">Pilih Server Mining</label>
+          <select id="regServer" required></select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnRegister">Daftar Sekarang</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (getCurrentUser()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const alertBox = document.getElementById('alertBox');
+    const regServer = document.getElementById('regServer');
+
+    function showAlert(msg, type = 'error') {
+      alertBox.textContent = msg;
+      alertBox.className = 'alert show alert-' + type;
+    }
+
+    function hideAlert() {
+      alertBox.className = 'alert';
+    }
+
+    function populateServers() {
+      const servers = getServers().filter(s => s.active);
+      regServer.innerHTML = '';
+      if (servers.length === 0) {
+        regServer.innerHTML = '<option value="">Tidak ada server aktif</option>';
+        return;
+      }
+      servers.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name + ' (+$' + s.rate.toFixed(3) + ' / 5s)';
+        regServer.appendChild(opt);
+      });
+    }
+
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      hideAlert();
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      hideAlert();
+      populateServers();
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      hideAlert();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const result = loginUser(username, password);
+      if (result.success) {
+        showAlert('Login berhasil! Mengalihkan...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 600);
+      } else {
+        showAlert(result.message);
+      }
+    });
+
+    registerForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      hideAlert();
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const serverId = regServer.value;
+      if (!serverId) {
+        showAlert('Pilih server mining terlebih dahulu');
+        return;
+      }
+      const result = registerUser(username, password, serverId);
+      if (result.success) {
+        showAlert('Registrasi berhasil! Mengalihkan...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 600);
+      } else {
+        showAlert(result.message);
+      }
+    });
+
+    populateServers();
+  </script>
+</body>
+</html>

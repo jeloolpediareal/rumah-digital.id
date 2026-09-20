@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e17">
+  <title>Home - Rumah Digital</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="logo.png" type="image/png">
+</head>
+<body>
+  <header class="app-header">
+    <img src="logo.png" alt="RD" class="logo-mini">
+    <span class="page-title">Home</span>
+    <span class="user-chip" id="headerUser">-</span>
+  </header>
+
+  <main class="app-content">
+    <div class="hero-section">
+      <img src="logo.png" alt="Rumah Digital" class="hero-logo">
+      <h1 class="hero-title">RUMAH DIGITAL</h1>
+      <p class="hero-tagline">Mining Crypto | Powering the Future</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Selamat Datang</div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;margin-top:8px">
+        Platform mining crypto digital yang dirancang untuk pengalaman modern dan efisien.
+        Mulai menambang, pantau saldo, dan kelola penarikan dengan mudah.
+      </p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h4>Mining Realtime</h4>
+        <p>Pendapatan otomatis setiap 5 detik</p>
+      </div>
+      <div class="feature-item">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </div>
+        <h4>Multi Server</h4>
+        <p>Pilih server sesuai rate mining</p>
+      </div>
+      <div class="feature-item">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </div>
+        <h4>Withdraw</h4>
+        <p>Tarik saldo setelah unlock fitur</p>
+      </div>
+      <div class="feature-item">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h4>Aman</h4>
+        <p>Data tersimpan lokal di perangkat</p>
+      </div>
+    </div>
+
+    <div class="card mt-16">
+      <div class="card-title">Status Akun</div>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--text-secondary)">Server Mining</span>
+          <span id="serverName">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--text-secondary)">Rate</span>
+          <span id="serverRate">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--text-secondary)">Withdraw Status</span>
+          <span id="unlockStatus">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-16">
+      <a href="dashboard.html" class="btn btn-primary" style="max-width:240px;margin:0 auto">Mulai Mining</a>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="home.html" class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="dashboard.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="withdraw.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M12 2v14M12 16l-5-5M12 16l5-5"/><path d="M5 20h14"/></svg>
+      <span>Withdraw</span>
+    </a>
+    <a href="riwayat.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <span>Riwayat</span>
+    </a>
+  </nav>
+
+  <script src="data.js"></script>
+  <script>
+    const user = requireAuth();
+    if (!user) throw new Error('Not authenticated');
+
+    document.getElementById('headerUser').textContent = user.username;
+
+    const servers = getServers();
+    const server = servers.find(s => s.id === user.serverId) || servers[0];
+    document.getElementById('serverName').textContent = server ? server.name : '-';
+    document.getElementById('serverRate').textContent = server ? ('$' + server.rate.toFixed(3) + ' / 5s') : '-';
+    document.getElementById('unlockStatus').textContent = user.unlocked ? 'Aktif' : 'Terkunci';
+    document.getElementById('unlockStatus').style.color = user.unlocked ? 'var(--success)' : 'var(--warning)';
+  </script>
+</body>
+</html>
