@@ -2,147 +2,155 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0e17">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05080f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Rumah Digital - Login</title>
+  <link rel="icon" href="logo.png">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body>
-  <div class="auth-page">
+  <div class="auth-wrap">
     <img src="logo.png" alt="Rumah Digital" class="auth-logo">
-    <h1 class="auth-title">RUMAH DIGITAL</h1>
-    <p class="auth-subtitle">Mining Crypto | Powering the Future</p>
+    <div class="auth-title">RUMAH DIGITAL</div>
+    <div class="auth-sub">Mining Crypto | Powering The Future</div>
 
     <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login" id="tabLogin">Login</button>
-        <button class="auth-tab" data-tab="register" id="tabRegister">Daftar</button>
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="login">Masuk</button>
+        <button type="button" class="tab-btn" data-tab="register">Daftar</button>
       </div>
 
-      <div id="alertBox" class="alert"></div>
-
-      <!-- Login Form -->
+      <!-- Login -->
       <form id="loginForm">
         <div class="form-group">
-          <label for="loginUsername">Username</label>
-          <input type="text" id="loginUsername" placeholder="Masukkan username" required autocomplete="username">
+          <label>Username</label>
+          <input type="text" id="loginUser" placeholder="Masukkan username" required autocomplete="username">
         </div>
         <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <input type="password" id="loginPassword" placeholder="Masukkan password" required autocomplete="current-password">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="Masukkan password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn btn-primary" id="btnLogin">Masuk</button>
+        <button type="submit" class="btn btn-primary">Masuk</button>
+        <div id="loginMsg" class="msg"></div>
       </form>
 
-      <!-- Register Form -->
+      <!-- Register -->
       <form id="registerForm" class="hidden">
         <div class="form-group">
-          <label for="regUsername">Username</label>
-          <input type="text" id="regUsername" placeholder="Minimal 3 karakter" required autocomplete="username">
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="Buat username" required autocomplete="username">
         </div>
         <div class="form-group">
-          <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" placeholder="Minimal 4 karakter" required autocomplete="new-password">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Buat password" required autocomplete="new-password">
         </div>
         <div class="form-group">
-          <label for="regServer">Pilih Server Mining</label>
+          <label>Pilih Server Mining</label>
           <select id="regServer" required></select>
         </div>
-        <button type="submit" class="btn btn-primary" id="btnRegister">Daftar Sekarang</button>
+        <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+        <div id="regMsg" class="msg"></div>
       </form>
     </div>
   </div>
 
   <script src="data.js"></script>
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
     // Redirect if already logged in
-    if (getCurrentUser()) {
-      window.location.href = 'dashboard.html';
-    }
+    (function() {
+      const user = getCurrentUser();
+      if (user) {
+        window.location.replace('dashboard.html');
+      }
+    })();
 
-    const tabLogin = document.getElementById('tabLogin');
-    const tabRegister = document.getElementById('tabRegister');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const alertBox = document.getElementById('alertBox');
-    const regServer = document.getElementById('regServer');
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+        document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+      });
+    });
 
-    function showAlert(msg, type = 'error') {
-      alertBox.textContent = msg;
-      alertBox.className = 'alert show alert-' + type;
-    }
-
-    function hideAlert() {
-      alertBox.className = 'alert';
-    }
-
-    function populateServers() {
-      const servers = getServers().filter(s => s.active);
-      regServer.innerHTML = '';
+    // Load servers for register
+    function loadServers() {
+      const sel = document.getElementById('regServer');
+      const servers = getServers().filter(s => s.status === 'active');
+      sel.innerHTML = '';
       if (servers.length === 0) {
-        regServer.innerHTML = '<option value="">Tidak ada server aktif</option>';
+        sel.innerHTML = '<option value="">Tidak ada server tersedia</option>';
         return;
       }
       servers.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = s.name + ' (+$' + s.rate.toFixed(3) + ' / 5s)';
-        regServer.appendChild(opt);
+        opt.textContent = s.name + ' (' + formatUSD(s.rate) + '/tick)';
+        sel.appendChild(opt);
       });
     }
+    loadServers();
 
-    tabLogin.addEventListener('click', () => {
-      tabLogin.classList.add('active');
-      tabRegister.classList.remove('active');
-      loginForm.classList.remove('hidden');
-      registerForm.classList.add('hidden');
-      hideAlert();
-    });
+    function showMsg(el, text, type) {
+      el.textContent = text;
+      el.className = 'msg show ' + type;
+    }
 
-    tabRegister.addEventListener('click', () => {
-      tabRegister.classList.add('active');
-      tabLogin.classList.remove('active');
-      registerForm.classList.remove('hidden');
-      loginForm.classList.add('hidden');
-      hideAlert();
-      populateServers();
-    });
-
-    loginForm.addEventListener('submit', (e) => {
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      hideAlert();
-      const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const result = loginUser(username, password);
-      if (result.success) {
-        showAlert('Login berhasil! Mengalihkan...', 'success');
-        setTimeout(() => window.location.href = 'dashboard.html', 600);
-      } else {
-        showAlert(result.message);
-      }
-    });
-
-    registerForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      hideAlert();
-      const username = document.getElementById('regUsername').value.trim();
-      const password = document.getElementById('regPassword').value;
-      const serverId = regServer.value;
-      if (!serverId) {
-        showAlert('Pilih server mining terlebih dahulu');
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+      const msg = document.getElementById('loginMsg');
+      const user = findUser(username);
+      if (!user || user.password !== password) {
+        showMsg(msg, 'Username atau password salah', 'error');
         return;
       }
-      const result = registerUser(username, password, serverId);
-      if (result.success) {
-        showAlert('Registrasi berhasil! Mengalihkan...', 'success');
-        setTimeout(() => window.location.href = 'dashboard.html', 600);
-      } else {
-        showAlert(result.message);
-      }
+      setSession(user.id);
+      updateUser(user.id, { lastActive: new Date().toISOString() });
+      showMsg(msg, 'Berhasil masuk...', 'success');
+      setTimeout(() => window.location.replace('dashboard.html'), 600);
     });
 
-    populateServers();
+    // Register
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('regUser').value.trim();
+      const password = document.getElementById('regPass').value;
+      const serverId = document.getElementById('regServer').value;
+      const msg = document.getElementById('regMsg');
+
+      if (username.length < 3) {
+        showMsg(msg, 'Username minimal 3 karakter', 'error');
+        return;
+      }
+      if (password.length < 4) {
+        showMsg(msg, 'Password minimal 4 karakter', 'error');
+        return;
+      }
+      if (!serverId) {
+        showMsg(msg, 'Pilih server mining terlebih dahulu', 'error');
+        return;
+      }
+
+      const result = createUser(username, password, serverId);
+      if (!result.ok) {
+        showMsg(msg, result.msg, 'error');
+        return;
+      }
+      setSession(result.user.id);
+      showMsg(msg, 'Pendaftaran berhasil!', 'success');
+      setTimeout(() => window.location.replace('dashboard.html'), 600);
+    });
   </script>
 </body>
 </html>

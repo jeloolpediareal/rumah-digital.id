@@ -1,210 +1,180 @@
-/**
- * Rumah Digital - Data Layer
- * Persistent storage using localStorage
- */
+// data.js - Data persistence layer (localStorage + defaults)
+// Semua data disimpan di localStorage agar tidak hilang
 
 const STORAGE_KEYS = {
-  users: 'rd_users',
-  currentUser: 'rd_current_user',
-  serverStatus: 'rd_server_status',
-  servers: 'rd_servers',
-  withdrawals: 'rd_withdrawals',
-  settings: 'rd_settings'
+  users: 'rd_users_v1',
+  servers: 'rd_servers_v1',
+  global: 'rd_global_v1',
+  session: 'rd_session_v1',
+  withdrawals: 'rd_withdrawals_v1'
 };
 
 const DEFAULT_SERVERS = [
-  { id: 'srv1', name: 'Alpha Miner', rate: 0.03, active: true },
-  { id: 'srv2', name: 'Beta Node', rate: 0.05, active: true },
-  { id: 'srv3', name: 'Gamma Farm', rate: 0.08, active: true }
+  { id: 'srv1', name: 'Alpha Mining Node', rate: 0.03, status: 'active' },
+  { id: 'srv2', name: 'Beta Hash Farm', rate: 0.05, status: 'active' },
+  { id: 'srv3', name: 'Gamma Power Core', rate: 0.08, status: 'active' }
 ];
 
-const DEFAULT_SETTINGS = {
-  usdToIdr: 17800,
-  unlockThreshold: 10,
-  unlockFeeUsd: 5,
-  miningIntervalMs: 5000
+const DEFAULT_GLOBAL = {
+  serverOnline: true,
+  exchangeRate: 17800 // IDR per 1 USD
 };
 
-function getUsers() {
+function loadJSON(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.users) || '[]');
-  } catch {
-    return [];
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    return fallback;
   }
+}
+
+function saveJSON(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// Users
+function getUsers() {
+  return loadJSON(STORAGE_KEYS.users, []);
 }
 
 function saveUsers(users) {
-  localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+  saveJSON(STORAGE_KEYS.users, users);
 }
 
-function getCurrentUser() {
-  try {
-    const id = localStorage.getItem(STORAGE_KEYS.currentUser);
-    if (!id) return null;
-    const users = getUsers();
-    return users.find(u => u.id === id) || null;
-  } catch {
-    return null;
-  }
+function findUser(username) {
+  return getUsers().find(u => u.username.toLowerCase() === username.toLowerCase());
 }
 
-function setCurrentUser(userId) {
-  if (userId) {
-    localStorage.setItem(STORAGE_KEYS.currentUser, userId);
-  } else {
-    localStorage.removeItem(STORAGE_KEYS.currentUser);
-  }
-}
-
-function updateUser(updated) {
+function createUser(username, password, selectedServerId) {
   const users = getUsers();
-  const idx = users.findIndex(u => u.id === updated.id);
-  if (idx !== -1) {
-    users[idx] = updated;
-    saveUsers(users);
-  }
+  if (findUser(username)) return { ok: false, msg: 'Username sudah digunakan' };
+  const newUser = {
+    id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    username,
+    password, // plain for demo simplicity (production should hash)
+    balance: 0,
+    unlockedWithdraw: false,
+    selectedServer: selectedServerId || (getServers()[0]?.id || null),
+    isMining: false,
+    lastMineAt: null,
+    createdAt: new Date().toISOString(),
+    lastActive: new Date().toISOString()
+  };
+  users.push(newUser);
+  saveUsers(users);
+  return { ok: true, user: newUser };
 }
 
-function getServerStatus() {
-  const s = localStorage.getItem(STORAGE_KEYS.serverStatus);
-  return s === null ? true : s === 'true';
+function updateUser(userId, updates) {
+  const users = getUsers();
+  const idx = users.findIndex(u => u.id === userId);
+  if (idx === -1) return false;
+  users[idx] = { ...users[idx], ...updates, lastActive: new Date().toISOString() };
+  saveUsers(users);
+  return true;
 }
 
-function setServerStatus(online) {
-  localStorage.setItem(STORAGE_KEYS.serverStatus, online ? 'true' : 'false');
+function getUserById(id) {
+  return getUsers().find(u => u.id === id);
 }
 
+// Servers
 function getServers() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.servers);
-    if (!data) {
-      localStorage.setItem(STORAGE_KEYS.servers, JSON.stringify(DEFAULT_SERVERS));
-      return DEFAULT_SERVERS;
-    }
-    return JSON.parse(data);
-  } catch {
+  const s = loadJSON(STORAGE_KEYS.servers, null);
+  if (!s || s.length === 0) {
+    saveJSON(STORAGE_KEYS.servers, DEFAULT_SERVERS);
     return DEFAULT_SERVERS;
   }
+  return s;
 }
 
 function saveServers(servers) {
-  localStorage.setItem(STORAGE_KEYS.servers, JSON.stringify(servers));
+  saveJSON(STORAGE_KEYS.servers, servers);
 }
 
-function getSettings() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.settings);
-    if (!data) {
-      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(DEFAULT_SETTINGS));
-      return { ...DEFAULT_SETTINGS };
-    }
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
-}
-
-function saveSettings(settings) {
-  localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
-}
-
-function getWithdrawals(userId) {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.withdrawals) || '{}');
-    return all[userId] || [];
-  } catch {
-    return [];
-  }
-}
-
-function addWithdrawal(userId, record) {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.withdrawals) || '{}');
-    if (!all[userId]) all[userId] = [];
-    all[userId].unshift(record);
-    localStorage.setItem(STORAGE_KEYS.withdrawals, JSON.stringify(all));
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-function generateId() {
-  return 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-}
-
-function formatUsd(amount) {
-  return '$' + Number(amount).toFixed(4);
-}
-
-function formatIdr(usd, rate) {
-  const idr = Math.round(usd * rate);
-  return 'Rp ' + idr.toLocaleString('id-ID');
-}
-
-function registerUser(username, password, serverId) {
-  const users = getUsers();
-  if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-    return { success: false, message: 'Username sudah digunakan' };
-  }
-  if (username.length < 3) {
-    return { success: false, message: 'Username minimal 3 karakter' };
-  }
-  if (password.length < 4) {
-    return { success: false, message: 'Password minimal 4 karakter' };
-  }
+function addServer(name, rate) {
   const servers = getServers();
-  const server = servers.find(s => s.id === serverId);
-  if (!server) {
-    return { success: false, message: 'Server tidak valid' };
-  }
-  const user = {
-    id: generateId(),
-    username,
-    password,
-    balance: 0,
-    serverId,
-    unlocked: false,
-    createdAt: new Date().toISOString(),
-    lastActive: new Date().toISOString(),
-    isMining: false
+  const id = 'srv' + Date.now();
+  servers.push({ id, name, rate: parseFloat(rate) || 0.01, status: 'active' });
+  saveServers(servers);
+  return id;
+}
+
+// Global
+function getGlobal() {
+  return loadJSON(STORAGE_KEYS.global, DEFAULT_GLOBAL);
+}
+
+function saveGlobal(g) {
+  saveJSON(STORAGE_KEYS.global, g);
+}
+
+function setServerOnline(online) {
+  const g = getGlobal();
+  g.serverOnline = !!online;
+  saveGlobal(g);
+}
+
+// Session
+function setSession(userId) {
+  saveJSON(STORAGE_KEYS.session, { userId, ts: Date.now() });
+}
+
+function getSession() {
+  return loadJSON(STORAGE_KEYS.session, null);
+}
+
+function clearSession() {
+  localStorage.removeItem(STORAGE_KEYS.session);
+}
+
+function getCurrentUser() {
+  const sess = getSession();
+  if (!sess || !sess.userId) return null;
+  return getUserById(sess.userId);
+}
+
+// Withdrawals
+function getWithdrawals() {
+  return loadJSON(STORAGE_KEYS.withdrawals, []);
+}
+
+function saveWithdrawals(list) {
+  saveJSON(STORAGE_KEYS.withdrawals, list);
+}
+
+function addWithdrawal(userId, amountUSD, method, details) {
+  const list = getWithdrawals();
+  const w = {
+    id: 'wd_' + Date.now(),
+    userId,
+    amountUSD: parseFloat(amountUSD),
+    amountIDR: parseFloat(amountUSD) * getGlobal().exchangeRate,
+    method,
+    details,
+    status: 'pending',
+    createdAt: new Date().toISOString()
   };
-  users.push(user);
-  saveUsers(users);
-  setCurrentUser(user.id);
-  return { success: true, user };
+  list.unshift(w);
+  saveWithdrawals(list);
+  return w;
 }
 
-function loginUser(username, password) {
-  const users = getUsers();
-  const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
-  if (!user) {
-    return { success: false, message: 'Username atau password salah' };
-  }
-  user.lastActive = new Date().toISOString();
-  updateUser(user);
-  setCurrentUser(user.id);
-  return { success: true, user };
+function getUserWithdrawals(userId) {
+  return getWithdrawals().filter(w => w.userId === userId);
 }
 
-function logout() {
-  setCurrentUser(null);
+// Utils
+function formatUSD(n) {
+  return '$' + (Number(n) || 0).toFixed(4);
 }
 
-function requireAuth() {
-  const user = getCurrentUser();
-  if (!user) {
-    window.location.href = 'index.html';
-    return null;
-  }
-  return user;
+function formatIDR(n) {
+  return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
 }
 
-function requireAdmin() {
-  // Admin uses separate session
-  const isAdmin = sessionStorage.getItem('rd_admin') === 'true';
-  if (!isAdmin) {
-    window.location.href = 'admin.html';
-    return false;
-  }
-  return true;
+function toIDR(usd) {
+  return (Number(usd) || 0) * getGlobal().exchangeRate;
 }

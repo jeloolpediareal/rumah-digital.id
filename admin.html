@@ -2,93 +2,89 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0e17">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#05080f">
   <title>Admin Panel - Rumah Digital</title>
+  <link rel="icon" href="logo.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo.png" type="image/png">
 </head>
 <body>
-  <div id="loginSection" class="auth-page">
-    <img src="logo.png" alt="Rumah Digital" class="auth-logo">
-    <h1 class="auth-title">ADMIN PANEL</h1>
-    <p class="auth-subtitle">Rumah Digital Control</p>
+  <div id="loginScreen" class="auth-wrap">
+    <img src="logo.png" alt="RD" class="auth-logo" style="width:100px;">
+    <div class="auth-title">ADMIN PANEL</div>
+    <div class="auth-sub">Rumah Digital Control Center</div>
     <div class="auth-card">
-      <div id="adminAlert" class="alert"></div>
-      <form id="adminLoginForm">
-        <div class="form-group">
-          <label for="adminUser">Username</label>
-          <input type="text" id="adminUser" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="adminPass">Password</label>
-          <input type="password" id="adminPass" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary">Masuk Admin</button>
-      </form>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="adminUser" placeholder="Username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPass" placeholder="Password">
+      </div>
+      <button class="btn btn-primary" id="adminLoginBtn">Masuk Admin</button>
+      <div id="adminLoginMsg" class="msg"></div>
     </div>
   </div>
 
-  <div id="adminSection" class="admin-page hidden">
-    <div class="admin-header">
-      <h1>Admin Panel</h1>
-      <button class="btn btn-secondary btn-sm" id="btnLogoutAdmin">Logout</button>
-    </div>
+  <div id="adminPanel" class="hidden">
+    <header class="app-header">
+      <img src="logo.png" alt="RD">
+      <div class="title-block">
+        <h1>Admin Panel</h1>
+        <div class="sub">Control Center</div>
+      </div>
+      <button class="logout-btn" id="adminLogout">Keluar</button>
+    </header>
 
-    <div class="admin-grid">
-      <div class="stat-card">
-        <div class="value" id="statTotalUsers">0</div>
-        <div class="label">Total Pengguna</div>
+    <main class="app-main" style="padding-bottom:40px;">
+      <div class="admin-grid">
+        <div class="admin-stat">
+          <div class="num" id="totalUsers">0</div>
+          <div class="lbl">Total Pengguna</div>
+        </div>
+        <div class="admin-stat">
+          <div class="num" id="onlineUsers">0</div>
+          <div class="lbl">Sedang Mining</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="value" id="statOnlineUsers">0</div>
-        <div class="label">Sedang Mining</div>
-      </div>
-      <div class="stat-card">
-        <div class="value" id="statServerStatus">-</div>
-        <div class="label">Status Server</div>
-      </div>
-      <div class="stat-card">
-        <div class="value" id="statTotalServers">0</div>
-        <div class="label">Total Server</div>
-      </div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">Kontrol Server Global</div>
-      <div class="admin-actions mt-8">
-        <button class="btn btn-success btn-sm" id="btnOnlineServer">Online Server</button>
-        <button class="btn btn-danger btn-sm" id="btnCloseServer">Close Server</button>
+      <div class="card">
+        <div class="card-title">Kontrol Server Global</div>
+        <div class="server-status mb-12" id="globalStatus">
+          <div class="status-dot online" id="gDot"></div>
+          <div class="status-text" id="gText">Server Online Live</div>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-success" id="btnOnline">Online Server</button>
+          <button class="btn btn-danger" id="btnClose">Close Server</button>
+        </div>
       </div>
-      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px">
-        Close Server akan menghentikan mining semua pengguna dan mengubah status menjadi Maintenance.
-      </p>
-    </div>
 
-    <div class="card">
-      <div class="card-title">Tambah Server Mining</div>
-      <form id="addServerForm" class="mt-8">
+      <div class="card">
+        <div class="card-title">Tambah Server Mining</div>
         <div class="form-group">
-          <label for="srvName">Nama Server</label>
-          <input type="text" id="srvName" placeholder="Contoh: Delta Node" required>
+          <label>Nama Server</label>
+          <input type="text" id="newSrvName" placeholder="Contoh: Delta Node">
         </div>
         <div class="form-group">
-          <label for="srvRate">Rate USD per 5 detik</label>
-          <input type="number" id="srvRate" step="0.001" min="0.001" value="0.03" required>
+          <label>Rate per Tick (USD setiap 5 detik)</label>
+          <input type="number" id="newSrvRate" step="0.01" min="0.001" placeholder="0.03">
         </div>
-        <button type="submit" class="btn btn-primary">Tambah Server</button>
-      </form>
-    </div>
+        <button class="btn btn-primary" id="btnAddSrv">Tambah Server</button>
+        <div id="addSrvMsg" class="msg"></div>
+      </div>
 
-    <div class="card">
-      <div class="card-title">Daftar Server</div>
-      <div id="serverList" class="mt-8"></div>
-    </div>
+      <div class="card">
+        <div class="card-title">Daftar Server</div>
+        <div id="srvListAdmin"></div>
+      </div>
 
-    <div class="card">
-      <div class="card-title">Status Pengguna</div>
-      <div id="userList" class="mt-8"></div>
-    </div>
+      <div class="card">
+        <div class="card-title">Status Pengguna</div>
+        <div id="userListAdmin"></div>
+      </div>
+    </main>
   </div>
 
   <script src="data.js"></script>
@@ -96,173 +92,131 @@
     const ADMIN_USER = 'Jelool';
     const ADMIN_PASS = 'Jelool';
 
-    const loginSection = document.getElementById('loginSection');
-    const adminSection = document.getElementById('adminSection');
-    const adminAlert = document.getElementById('adminAlert');
-
-    function isAdminLoggedIn() {
-      return sessionStorage.getItem('rd_admin') === 'true';
+    function showPanel() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('adminPanel').classList.remove('hidden');
+      renderAll();
     }
 
-    function showAdmin() {
-      loginSection.classList.add('hidden');
-      adminSection.classList.remove('hidden');
-      refreshAdmin();
-    }
-
-    function showLogin() {
-      loginSection.classList.remove('hidden');
-      adminSection.classList.add('hidden');
-      sessionStorage.removeItem('rd_admin');
-    }
-
-    if (isAdminLoggedIn()) {
-      showAdmin();
-    }
-
-    document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
-      e.preventDefault();
+    document.getElementById('adminLoginBtn').addEventListener('click', () => {
       const u = document.getElementById('adminUser').value.trim();
       const p = document.getElementById('adminPass').value;
+      const msg = document.getElementById('adminLoginMsg');
       if (u === ADMIN_USER && p === ADMIN_PASS) {
-        sessionStorage.setItem('rd_admin', 'true');
-        showAdmin();
+        sessionStorage.setItem('rd_admin', '1');
+        showPanel();
       } else {
-        adminAlert.textContent = 'Username atau password salah';
-        adminAlert.className = 'alert show alert-error';
+        msg.className = 'msg show error';
+        msg.textContent = 'Username atau password salah';
       }
     });
 
-    document.getElementById('btnLogoutAdmin').addEventListener('click', () => {
-      showLogin();
+    if (sessionStorage.getItem('rd_admin') === '1') showPanel();
+
+    document.getElementById('adminLogout').addEventListener('click', () => {
+      sessionStorage.removeItem('rd_admin');
+      location.reload();
     });
 
-    function refreshAdmin() {
-      const users = getUsers();
-      const servers = getServers();
-      const online = getServerStatus();
-      const now = Date.now();
-
-      // Consider user "mining" if lastActive within 2 minutes
-      const miningCount = users.filter(u => {
-        if (!u.lastActive) return false;
-        return (now - new Date(u.lastActive).getTime()) < 120000 && u.isMining;
-      }).length;
-
-      document.getElementById('statTotalUsers').textContent = users.length;
-      document.getElementById('statOnlineUsers').textContent = miningCount;
-      document.getElementById('statServerStatus').textContent = online ? 'ONLINE' : 'OFF';
-      document.getElementById('statServerStatus').style.color = online ? 'var(--success)' : 'var(--danger)';
-      document.getElementById('statTotalServers').textContent = servers.length;
-
-      // Server list
-      const serverList = document.getElementById('serverList');
-      if (servers.length === 0) {
-        serverList.innerHTML = '<p style="color:var(--text-muted)">Belum ada server</p>';
+    function renderGlobal() {
+      const g = getGlobal();
+      const dot = document.getElementById('gDot');
+      const txt = document.getElementById('gText');
+      if (g.serverOnline) {
+        dot.className = 'status-dot online';
+        txt.textContent = 'Server Online Live';
       } else {
-        serverList.innerHTML = servers.map(s => `
-          <div class="server-list-item">
-            <div>
-              <strong>${s.name}</strong>
-              <div class="meta">Rate: $${s.rate.toFixed(3)} / 5s · ID: ${s.id}</div>
-            </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <span class="badge ${s.active ? 'badge-online' : 'badge-offline'}">${s.active ? 'Aktif' : 'Nonaktif'}</span>
-              <button class="btn btn-secondary btn-sm" onclick="toggleServer('${s.id}')">${s.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteServer('${s.id}')">Hapus</button>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      // User list
-      const userList = document.getElementById('userList');
-      if (users.length === 0) {
-        userList.innerHTML = '<p style="color:var(--text-muted)">Belum ada pengguna</p>';
-      } else {
-        userList.innerHTML = users.map(u => {
-          const last = u.lastActive ? new Date(u.lastActive) : null;
-          const isRecent = last && (now - last.getTime()) < 120000;
-          const statusBadge = isRecent && u.isMining
-            ? '<span class="badge badge-mining">Mining</span>'
-            : isRecent
-              ? '<span class="badge badge-online">Online</span>'
-              : '<span class="badge badge-offline">Offline</span>';
-          const srv = servers.find(s => s.id === u.serverId);
-          return `
-            <div class="user-list-item">
-              <div>
-                <strong>@${u.username}</strong>
-                <div class="meta">Saldo: ${formatUsd(u.balance)} · Server: ${srv ? srv.name : '-'} · Unlock: ${u.unlocked ? 'Ya' : 'Tidak'}</div>
-                <div class="meta">Terakhir aktif: ${last ? last.toLocaleString('id-ID') : '-'}</div>
-              </div>
-              ${statusBadge}
-            </div>
-          `;
-        }).join('');
+        dot.className = 'status-dot offline';
+        txt.textContent = 'Server Maintenance';
       }
     }
 
-    document.getElementById('btnOnlineServer').addEventListener('click', () => {
-      setServerStatus(true);
-      refreshAdmin();
+    document.getElementById('btnOnline').addEventListener('click', () => {
+      setServerOnline(true);
+      renderGlobal();
+    });
+    document.getElementById('btnClose').addEventListener('click', () => {
+      setServerOnline(false);
+      renderGlobal();
     });
 
-    document.getElementById('btnCloseServer').addEventListener('click', () => {
-      if (confirm('Matikan server mining global? Semua user akan melihat status Maintenance.')) {
-        setServerStatus(false);
-        // Also mark users as not mining
-        const users = getUsers();
-        users.forEach(u => {
-          u.isMining = false;
-        });
-        saveUsers(users);
-        refreshAdmin();
-      }
-    });
-
-    document.getElementById('addServerForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('srvName').value.trim();
-      const rate = parseFloat(document.getElementById('srvRate').value);
-      if (!name || isNaN(rate) || rate <= 0) {
-        alert('Data tidak valid');
+    document.getElementById('btnAddSrv').addEventListener('click', () => {
+      const name = document.getElementById('newSrvName').value.trim();
+      const rate = parseFloat(document.getElementById('newSrvRate').value);
+      const msg = document.getElementById('addSrvMsg');
+      if (!name || !rate || rate <= 0) {
+        msg.className = 'msg show error';
+        msg.textContent = 'Isi nama dan rate dengan benar';
         return;
       }
-      const servers = getServers();
-      const id = 'srv' + Date.now().toString(36);
-      servers.push({ id, name, rate, active: true });
-      saveServers(servers);
-      document.getElementById('addServerForm').reset();
-      document.getElementById('srvRate').value = '0.03';
-      refreshAdmin();
+      addServer(name, rate);
+      document.getElementById('newSrvName').value = '';
+      document.getElementById('newSrvRate').value = '';
+      msg.className = 'msg show success';
+      msg.textContent = 'Server berhasil ditambahkan';
+      renderServersAdmin();
     });
 
-    window.toggleServer = function(id) {
+    function renderServersAdmin() {
+      const box = document.getElementById('srvListAdmin');
       const servers = getServers();
-      const s = servers.find(x => x.id === id);
-      if (s) {
-        s.active = !s.active;
-        saveServers(servers);
-        refreshAdmin();
-      }
-    };
+      box.innerHTML = '';
+      servers.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.innerHTML = `
+          <div>
+            <div style="font-weight:600;">${s.name}</div>
+            <div style="font-size:12px;color:var(--cyan);">${formatUSD(s.rate)} / tick</div>
+          </div>
+          <span style="font-size:12px;color:var(--text-muted);">${s.status}</span>
+        `;
+        box.appendChild(el);
+      });
+    }
 
-    window.deleteServer = function(id) {
-      if (!confirm('Hapus server ini?')) return;
-      let servers = getServers();
-      if (servers.length <= 1) {
-        alert('Minimal harus ada 1 server');
+    function renderUsers() {
+      const users = getUsers();
+      document.getElementById('totalUsers').textContent = users.length;
+
+      const now = Date.now();
+      let miningCount = 0;
+      const box = document.getElementById('userListAdmin');
+      box.innerHTML = '';
+
+      if (users.length === 0) {
+        box.innerHTML = '<div class="empty-state">Belum ada pengguna</div>';
+        document.getElementById('onlineUsers').textContent = '0';
         return;
       }
-      servers = servers.filter(s => s.id !== id);
-      saveServers(servers);
-      refreshAdmin();
-    };
 
-    // Auto refresh every 10s
+      users.forEach(u => {
+        const last = u.lastMineAt ? new Date(u.lastMineAt).getTime() : 0;
+        const isMining = (now - last) < 30000; // aktif 30 detik terakhir
+        if (isMining) miningCount++;
+        const srv = getServers().find(s => s.id === u.selectedServer);
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.innerHTML = `
+          <div>
+            <div style="font-weight:600;">@${u.username}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${formatUSD(u.balance)} · ${srv ? srv.name : '-'}</div>
+          </div>
+          <span class="badge ${isMining ? 'badge-success' : 'badge-pending'}">${isMining ? 'Mining' : 'Idle'}</span>
+        `;
+        box.appendChild(el);
+      });
+      document.getElementById('onlineUsers').textContent = miningCount;
+    }
+
+    function renderAll() {
+      renderGlobal();
+      renderServersAdmin();
+      renderUsers();
+    }
+
     setInterval(() => {
-      if (isAdminLoggedIn()) refreshAdmin();
+      if (sessionStorage.getItem('rd_admin') === '1') renderUsers();
     }, 10000);
   </script>
 </body>
